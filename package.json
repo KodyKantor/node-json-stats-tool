@@ -1,0 +1,19 @@
+{
+  "name": "json-stats-tool",
+  "version": "1.0.0",
+  "description": "gather statistics from JSON input streams",
+  "main": "json-stats-tool.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KodyKantor/node-json-stats-tool.git"
+  },
+  "author": "Kody A Kantor",
+  "license": "MIT",
+  "dependencies": {
+    "dashdash": "1.14.1",
+    "jsprim": "2.0.0",
+    "lstream": "0.0.4",
+    "stats-tool": "1.0.0",
+    "tab": "1.0.0"
+  }
+}
