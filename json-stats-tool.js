@@ -27,7 +27,7 @@ function main() {
 			var labels = {};
 			var val = getValue(obj, met);
 			if (val === undefined) {
-				/* 
+				/*
 				 * XXX should we return zero so there isn't a
 				 * hole in the output?
 				 */
@@ -52,7 +52,7 @@ function main() {
 	});
 	stream.on('end', function () {
 		clearInterval(interval);
-		print_metrics(opts, compute_stats(opts, stats));	
+		print_metrics(opts, compute_stats(opts, stats));
 	});
 
 	if (!opts.summary) {
@@ -69,23 +69,25 @@ function main() {
 function compute_stats(opts, stats) {
 	switch (opts.operation) {
 		case 'average':
-			return stats.average(opts.count);
+			return (stats.average(opts.count));
 		case 'sum':
-			return stats.sum(opts.count);
+			return (stats.sum(opts.count));
 		case 'count':
-			return stats.sum(opts.count);
+			return (stats.sum(opts.count));
+		default:
+			return (null);
 	}
 }
 
 function getValue(obj, field) {
-	return new Function('obj', 'return (obj.' + field + ')')(obj);
+	return (new Function('obj', 'return (obj.' + field + ')')(obj));
 }
 
 /*
  * Serialize and print metrics coming from the stats module.
  *
  * Metrics come in looking like this:
- * [ 
+ * [
  *  [
  *   { decomposition: 'headrootdir', metric: 'req.timers.getMetadata' },
  *   33458.333333333336
@@ -94,7 +96,7 @@ function getValue(obj, field) {
  *   { decomposition: 'getrootdir', metric: 'req.timers.getMetadata' },
  *   19772
  *  ],
- *  [ 
+ *  [
  *   { decomposition: 'headstorage', metric: 'req.timers.getMetadata' },
  *   130487
  *  ],
@@ -138,7 +140,7 @@ function print_metrics(opts, metrics) {
 		if (metric_map[met[0]['decomposition']] === undefined) {
 			metric_map[met[0]['decomposition']] = {};
 		}
-		/* 
+		/*
 		 * metric_map[decomp_value][metric_name] = metric_value
 		 * e.g. { 'putobject': { 'req.timers.getMetadata': 156382 } }
 		 */
@@ -188,11 +190,12 @@ function print_metrics(opts, metrics) {
 		'omitHeader': opts.no_header
 	});
 
-	/* print an extra line to make streaming output more readable */	
+	/* print an extra line to make streaming output more readable */
 	console.log();
 }
 
 function parseCommaSepStringNoEmpties(option, optstr, arg) {
+	/* JSSTYLED */
 	return arg.trim().split(/\s*,\s*/g)
 	    .filter(function (part) { return part; });
 }
@@ -291,7 +294,7 @@ function parseOpts() {
 		'operation': opts.operation,
 		'summary': opts.summary,
 		'no_header': opts.no_header,
-	       	'verbose': opts.v
+		'verbose': opts.v
 	});
 }
 
