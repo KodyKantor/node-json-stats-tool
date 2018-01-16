@@ -169,8 +169,12 @@ function print_metrics(opts, metrics) {
 			} else {
 				prev_decomp = row[0];
 			}
+		} else {
+			if (row[0] === 'undefined') {
+				row[0] = '';
+			}
 		}
-		row[2] = Math.trunc(row[2]); /* chop off decimals */
+		row[2] = (row[2]).toFixed(0); /* chop off decimals */
 	});
 
 	/* print the table */

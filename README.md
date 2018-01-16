@@ -3,7 +3,7 @@ This program is useful for getting simple statistics from JSON formatted files.
 
 ## Install
 ```
-npm install json-stats
+npm install json-stats-tool
 ```
 
 ## Sample Usage
