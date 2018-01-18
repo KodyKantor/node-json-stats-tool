@@ -22,7 +22,7 @@ Given this sample input file:
 ```
 We can get the average age of people by occupation:
 ```
-$ ./jsonstats.js -o average -m age -d occupation < sample.json
+$ ./json-stats-tool.js -o average -m age -d occupation < sample.json
 OCCUPATION METRIC    AVERAGE
 student    age         14
 doctor     age         50
@@ -31,7 +31,7 @@ programmer age         36
 
 Or the sum of their ages:
 ```
-$ ./jsonstats.js -o sum -m age -d occupation < sample.json
+$ ./json-stats-tool.js -o sum -m age -d occupation < sample.json
 OCCUPATION METRIC        SUM
 student    age         72
 doctor     age        100
@@ -40,7 +40,7 @@ programmer age        108
 
 Or the count of people who are at the same age:
 ```
-$ ./jsonstats.js -o count -m age < sample.json
+$ ./json-stats-tool.js -o count -m age < sample.json
           METRIC      COUNT
           10          2
           16          1
@@ -49,6 +49,15 @@ $ ./jsonstats.js -o count -m age < sample.json
           33          1
           45          1
           50          2
+```
+
+Or do lots of stuff at once!
+```
+$ ./json-stats-tool.js -o sum,average,median -m age -d occupation < sample.json
+OCCUPATION METRIC        SUM    AVERAGE     MEDIAN
+student    age         72         14         16
+doctor     age        100         50         50
+programmer age        108         36         33
 ```
 
 This works for nested objects too.
@@ -62,7 +71,7 @@ If we have a JSON structure that looks something like this:
 ```
 We could easily find the count of status codes returned by each route:
 ```
-$ grep '_audit' < muskie.log | ./jsonstats.js -m res.statusCode -d route -o count
+$ grep '_audit' < muskie.log | ./json-stats-tool.js -m res.statusCode -d route -o count
 ROUTE       METRIC      COUNT
 headrootdir 200          3
 getrootdir  200          2
@@ -75,7 +84,7 @@ getstorage  200          2
 Or if you wanted to see where the most requests are coming from you can pipe
 the output from this tool into other things:
 ```
-$ grep 'audit' < webserver.log | ./jsonstats.js -m remoteAddress -o count -H | sort -n -k 2 | tail -n 5
+$ grep 'audit' < webserver.log | ./json-stats-tool.js -m remoteAddress -o count -H | sort -n -k 2 | tail -n 5
           172.29.1.101       1644
           172.27.1.64        2201
           172.29.1.103       3309

@@ -7,7 +7,7 @@ var mod_stats = require('stats-tool');
 var mod_tab = require('tab');
 
 
-var SUPPORTED_OPERATIONS = [ 'sum', 'average', 'count' ];
+var SUPPORTED_OPERATIONS = [ 'sum', 'average', 'median', 'count' ];
 
 function main() {
 	var opts = parseOpts();
@@ -67,16 +67,39 @@ function main() {
 }
 
 function compute_stats(opts, stats) {
-	switch (opts.operation) {
-		case 'average':
-			return (stats.average(opts.count));
-		case 'sum':
-			return (stats.sum(opts.count));
-		case 'count':
-			return (stats.sum(opts.count));
-		default:
-			return (null);
+	var i;
+	var completed_operations = opts.operations.map(function (op) {
+		switch (op) {
+			case 'average':
+				return (stats.average(opts.count));
+			case 'sum':
+				return (stats.sum(opts.count));
+			case 'count':
+				return (stats.sum(opts.count));
+			case 'median':
+				return (stats.median());
+			default:
+				return (null);
+		}
+	});
+
+	/* chop off decimals in first operation output */
+	completed_operations[0].forEach(function (metric, ind) {
+		completed_operations[0][ind][1] = (metric[1]).toFixed(0);
+	});
+
+	/*
+	 * copy the values from subsequent operations into the first operation
+	 * output
+	 */
+	for (i = 1; i < completed_operations.length; i++) {
+		completed_operations[i].forEach(function (metric, ind) {
+			completed_operations[0][ind].push(
+			    (metric[1]).toFixed(0));
+		});
 	}
+
+	return (completed_operations[0]);
 }
 
 function getValue(obj, field) {
@@ -130,6 +153,7 @@ function getValue(obj, field) {
  *
  */
 function print_metrics(opts, metrics) {
+	var columns;
 	var metric_map = {};
 	var rows;
 	var prev_decomp;
@@ -141,16 +165,17 @@ function print_metrics(opts, metrics) {
 			metric_map[met[0]['decomposition']] = {};
 		}
 		/*
-		 * metric_map[decomp_value][metric_name] = metric_value
-		 * e.g. { 'putobject': { 'req.timers.getMetadata': 156382 } }
+		 * metric_map[decomp_value][metric_name] = metric_values
+		 * e.g. { 'putobject': { 'req.timers.getMetadata': [ 156382 ]} }
 		 */
-		metric_map[met[0]['decomposition']][met[0]['metric']] = met[1];
+		metric_map[met[0]['decomposition']][met[0]['metric']] =
+		    met.slice(1);
 	});
 
 	/* flatten the object */
 	rows = mod_jsprim.flattenObject(metric_map, 2);
 
-	/* chop off decimals for formatting, trim repeated decomp fields */
+	/* trim repeated decomp fields, figure out longest names */
 	max_decomp_len = max_metric_len = 0;
 	prev_decomp = '';
 	rows.forEach(function (row) {
@@ -174,22 +199,27 @@ function print_metrics(opts, metrics) {
 				row[0] = '';
 			}
 		}
-		row[2] = (row[2]).toFixed(0); /* chop off decimals */
+	});
+
+	/* make a column for each operation (e.g. median, average) */
+	columns = [ {
+		'label': opts.decomp.toUpperCase(),
+		'width': max_decomp_len
+	}, {
+		'label': 'METRIC',
+		'width': max_metric_len
+	} ];
+	opts.operations.forEach(function (op) {
+		columns.push({
+			'label': op.toUpperCase(),
+			'width': 10,
+			'align': 'right'
+		});
 	});
 
 	/* print the table */
 	mod_tab.emitTable({
-		'columns': [ {
-			'label': opts.decomp.toUpperCase(),
-			'width': max_decomp_len
-		}, {
-			'label': 'METRIC',
-			'width': max_metric_len
-		}, {
-			'label': opts.operation.toUpperCase(),
-			'width': 10,
-			'align': 'right'
-		} ],
+		'columns': columns,
 		'rows': rows,
 		'omitHeader': opts.no_header
 	});
@@ -223,10 +253,11 @@ function parseOpts() {
 		'helpArg': 'FIELD[,FIELD]',
 		'help': 'comma separated list of JSON fields to track'
 	}, {
-		'names': ['operation', 'o'],
-		'type': 'string',
-		'helpArg': '[sum|average|count]',
-		'help': 'name of the operation to perform on observed metrics'
+		'names': ['operations', 'o'],
+		'type': 'commaSepString',
+		'helpArg': '[sum,average,median,count]',
+		'help': 'name of the operation(s) to perform on observed'
+		    + ' metrics'
 	}, {
 		'names': ['decomp', 'd'],
 		'type': 'string',
@@ -278,24 +309,26 @@ function parseOpts() {
 		process.exit(1);
 	}
 
-	if (!opts.operation) {
-		console.log('operation required (-o, --operation)');
+	if (!opts.operations) {
+		console.log('operation(s) required (-o, --operation)');
 		usage();
 		process.exit(1);
 	}
 
-	if (SUPPORTED_OPERATIONS.indexOf(opts.operation) < 0) {
-		console.log('invalid operation name. Must be one of',
-		    SUPPORTED_OPERATIONS);
-		usage();
-		process.exit(1);
-	}
+	opts.operations.forEach(function (op) {
+		if (SUPPORTED_OPERATIONS.indexOf(op) < 0) {
+			console.log('invalid operation name. Must be one of',
+			    SUPPORTED_OPERATIONS);
+			usage();
+			process.exit(1);
+		}
+	});
 
 	return ({
 		'metrics': opts.metrics,
 		'decomp': opts.decomp,
 		'count': opts.num,
-		'operation': opts.operation,
+		'operations': opts.operations,
 		'summary': opts.summary,
 		'no_header': opts.no_header,
 		'verbose': opts.v
